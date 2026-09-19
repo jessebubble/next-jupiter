@@ -38,10 +38,7 @@ const rows = ROWS.map((row, i) => {
 
 export function PhotoWall() {
   return (
-    <div
-      className="grid h-dvh w-screen grid-rows-3 gap-[0.5vh] p-[0.5vh]"
-      style={{ ["--gap" as string]: "0.5vh" }}
-    >
+    <div className="grid h-dvh w-screen grid-rows-3 gap-[0.5vh] p-[0.5vh]">
       {rows.map((row, rowIndex) => (
         <div key={rowIndex} className="relative overflow-hidden">
           <div className={`track ${row.dir}`} style={{ animationDuration: row.dur }}>
@@ -49,7 +46,7 @@ export function PhotoWall() {
               <div
                 key={i}
                 className="frame"
-                style={{ aspectRatio: `${photo.w} / ${photo.h}` }}
+                style={{ ["--ar" as string]: (photo.w / photo.h).toFixed(4) }}
               >
                 {/* Plain <img>, not next/image: process-photos.py already
                     resampled every file to the one height this layout uses, so
@@ -63,9 +60,12 @@ export function PhotoWall() {
                   width={photo.w}
                   height={photo.h}
                   decoding="async"
-                  /* The first handful of each row is on screen at t=0 and must
-                     not pop in; the rest stream in as they approach. */
-                  loading={i < 6 ? "eager" : "lazy"}
+                  /* Eager, all of them. A lazily-loaded frame arrives empty as
+                     it swings into view, and an empty frame on a photo wall
+                     just reads as a hole. There are only 185 distinct files
+                     (~19MB) and a row takes minutes to come round, so they are
+                     all in cache long before they are needed. */
+                  loading="eager"
                 />
               </div>
             ))}

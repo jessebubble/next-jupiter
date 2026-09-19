@@ -17,6 +17,14 @@
   --row-1: 430s;
   --row-2: 497s;
   --row-3: 571s;
+
+  /* Gap between photos, and the height of one row. The wall is three rows
+     inside a 100dvh grid with 0.5vh of padding top and bottom and 0.5vh
+     between rows, so each row loses 2vh in total. Frame widths are derived
+     from this rather than from a percentage height, which is what keeps the
+     track's max-content width honest — see .frame. */
+  --gap: 0.5vh;
+  --row-h: calc((100dvh - 2vh) / 3);
 }
 
 @theme inline {
@@ -64,7 +72,6 @@ body {
   display: flex;
   width: max-content;
   height: 100%;
-  gap: var(--gap);
   will-change: transform;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
@@ -73,9 +80,23 @@ body {
 .track-left  { animation-name: drift-left; }
 .track-right { animation-name: drift-right; }
 
+/* Every frame carries a definite width computed from the row height and its
+   own aspect ratio, and spaces itself with margin rather than the track using
+   `gap`. Both details matter:
+
+   - With only `height: 100%` and `aspect-ratio`, the percentage height is
+     indefinite while the browser measures `width: max-content`, so it sizes
+     the track off each <img>'s natural width instead of its rendered width.
+     The track then comes out far wider than its photos and the tail of every
+     row is empty — a long stretch of background with nothing in it.
+   - `gap` applies between items but not after the last one, so half a gap goes
+     missing and -50% of the track no longer equals one copy's pitch. A margin
+     on every frame keeps the pitch uniform across the wrap. */
 .frame {
   position: relative;
   height: 100%;
+  width: calc(var(--row-h) * var(--ar));
+  margin-right: var(--gap);
   flex: none;
   overflow: hidden;
   border-radius: 2px;
