@@ -1,26 +1,106 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   Palette lifted from the invitation: blush border, cream card, soft charcoal
+   type. The stage behind the photos is a warm near-black so colour photos pop
+   without the screen glowing at people for three hours.
+--------------------------------------------------------------------------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --stage: #14100f;
+  --cream: #fbf7f5;
+  --blush: #e8b4b0;
+  --blush-deep: #c98d89;
+  --ink: #2f2b2a;
+
+  /* Row loop durations. Deliberately non-harmonic so the three rows never
+     fall back into the same arrangement — see PhotoWall. */
+  --row-1: 430s;
+  --row-2: 497s;
+  --row-3: 571s;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-stage: var(--stage);
+  --color-cream: var(--cream);
+  --color-blush: var(--blush);
+  --color-blush-deep: var(--blush-deep);
+  --color-ink: var(--ink);
+  --font-display: var(--font-display);
+  --font-detail: var(--font-detail);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;              /* a TV never scrolls */
+  background: var(--stage);
+  overscroll-behavior: none;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--cream);
+  font-family: var(--font-detail), ui-sans-serif, system-ui, sans-serif;
+  cursor: none;                  /* no mouse pointer parked on the screen */
+}
+
+/* --- the marquee ---------------------------------------------------------
+   Each track holds its photos twice. Sliding by exactly -50% lands copy two
+   precisely where copy one started, so the wrap is invisible and the animation
+   restarts from a clean transform every cycle rather than accumulating drift
+   over a three-hour run.
+------------------------------------------------------------------------- */
+@keyframes drift-left {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+
+@keyframes drift-right {
+  from { transform: translate3d(-50%, 0, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+
+.track {
+  display: flex;
+  width: max-content;
+  height: 100%;
+  gap: var(--gap);
+  will-change: transform;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.track-left  { animation-name: drift-left; }
+.track-right { animation-name: drift-right; }
+
+.frame {
+  position: relative;
+  height: 100%;
+  flex: none;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #241d1c;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.05);
+}
+
+.frame img {
+  display: block;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+/* Title card. A plain translucent fill rather than backdrop-filter: blurring a
+   region that has moving photos under it means re-compositing every frame, and
+   this has to survive hours on whatever hardware the TV has. The vignette
+   underneath does the legibility work instead. */
+.card {
+  background: color-mix(in srgb, var(--cream) 96%, transparent);
+  box-shadow:
+    0 2px 60px rgb(0 0 0 / 0.55),
+    0 0 0 1px rgb(255 255 255 / 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track { animation-duration: calc(var(--dur) * 3); }
 }

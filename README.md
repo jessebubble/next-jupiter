@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Brianna & Jupiter — engagement wall
 
-## Getting Started
+A single full-screen page built to run on a TV for the length of a party.
+185 photos drift past in three horizontal rows, endlessly. Nothing scrolls,
+nothing needs clicking, and there is no second screen.
 
-First, run the development server:
+## Running it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+pnpm build && pnpm start      # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open it on the TV, click once (or press <kbd>F</kbd>) to go fullscreen. That
+click also grants the screen wake lock, so the TV won't blank mid-evening.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`pnpm dev` works too, but use the production build for the actual party — the
+page is fully static, so after the first load it runs with no server work at all.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## The photos
 
-## Learn More
+`public/photos/` is generated, not hand-managed. To rebuild it from the source
+folder:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm photos                   # reads ~/Downloads/jupiter-pics
+pnpm photos /path/to/folder   # or point it somewhere else
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+[`scripts/process-photos.py`](scripts/process-photos.py) skips 0-byte
+placeholder files, drops exact duplicates by hash, applies EXIF rotation, and
+resamples everything to one uniform height so the marquee rows line up. It
+writes [`app/photos.json`](app/photos.json) with real dimensions, which is what
+the layout reads — no image is ever measured in the browser.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The original 410 files reduced to **185 unique photos, 19 MB**: half the folder
+was 0-byte ghost copies and another 20 were true duplicates.
 
-## Deploy on Vercel
+## Editing the text
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Everything that isn't a photo lives in [`app/event.ts`](app/event.ts).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## How the motion works
+
+Each row's photos are laid out twice in one flex track, and the track slides by
+exactly `-50%` on a linear infinite loop — so copy two lands precisely where
+copy one began and the wrap is invisible. The transform resets to zero every
+cycle instead of growing without bound, which is what keeps it stable over
+hours rather than minutes.
+
+The three rows loop in 430s / 497s / 571s. Those numbers are deliberately not
+multiples of each other: the rows fall out of phase and the screen never
+returns to an arrangement anyone has already seen. The middle row runs the
+opposite direction from the other two, which gives the wall depth and keeps the
+eye moving.
+
+Row durations are CSS variables in [`app/globals.css`](app/globals.css)
+(`--row-1`, `--row-2`, `--row-3`) — raise them to slow the wall down.
